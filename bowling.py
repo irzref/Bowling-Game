@@ -167,12 +167,12 @@ def game_play(input_hit_pins_setting, input_message):
     print("game starts now")
 
     game_score = []
+    strike = 0
+    spare = 0
 
     for frame in range(10):
         
-        hit_pins = 0
-        strike = 0
-        spare = 0
+        hit_pins = 0        
 
         for roll in range(2):
         
