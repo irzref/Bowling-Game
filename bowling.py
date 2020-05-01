@@ -48,7 +48,7 @@ def calculate_score(game_score, frame, roll, hit_pins):
 
     if roll == 1 :
 
-        frame = {
+        frame_dict = {
             'pins_by_roll' : [],
             'total_pins' : 0,
             'bonus' : "",
@@ -57,7 +57,7 @@ def calculate_score(game_score, frame, roll, hit_pins):
             'game_total_point_until_this_frame' : 0
         }
 
-        game_score.append(frame)
+        game_score.append(frame_dict)
 
         if hit_pins == 10 :
 
@@ -81,13 +81,11 @@ def calculate_score(game_score, frame, roll, hit_pins):
 
     # adding bonus to previous frame
 
-    game_total_point_until_this_frame = 0
-
     if frame != 1 :
 
         previous_frame = frame - 2
 
-        if game_score[previous_frame]["bonus"] == "STRIKE" :
+        if game_score[previous_frame]["bonus"] == "STRIKE" and roll < 3:
 
             game_score[previous_frame]["bonus_point"] += hit_pins
 
@@ -95,32 +93,25 @@ def calculate_score(game_score, frame, roll, hit_pins):
 
             game_score[previous_frame]["bonus_point"] += hit_pins
 
-        game_score[previous_frame]["frame_total_point"] += game_score[previous_frame]["bonus_point"]
+        game_score[previous_frame]["frame_total_point"] = game_score[previous_frame]["total_pins"] + game_score[previous_frame]["bonus_point"]
 
-        game_total_point_until_this_frame = sum(frame_score['frame_total_point'] for frame_score in game_score) 
+        game_score[ current_frame ]["game_total_point_until_this_frame"] = sum(frame_score['frame_total_point'] for frame_score in game_score) 
 
-        game_score[previous_frame]["game_total_point_until_this_frame"] = game_total_point_until_this_frame - game_score[ current_frame ]["frame_total_point"]
-
-
-
-    # totaling
-
-    game_score[ frame - 1 ]["game_total_point_until_this_frame"] = game_total_point_until_this_frame
+        game_score[previous_frame]["game_total_point_until_this_frame"] = game_score[ current_frame ]["game_total_point_until_this_frame"] - game_score[ current_frame ]["frame_total_point"]
 
 
-
-    print("calculating result", game_score)
 
     return game_score, bonus
+
 
 
 def get_input(input_hit_pins_setting, input_message, hit_pins):
 
     if input_hit_pins_setting == "M" :
 
-        additional_message = ", the number of available pins is" + str(10 - hit_pins)
+        additional_message = ", the number of available pins is " + str(10 - hit_pins)
 
-        user_input = input(input_message + additional_message)
+        user_input = input(input_message + additional_message + " \n")
 
         try:
 
@@ -152,7 +143,7 @@ def get_input(input_hit_pins_setting, input_message, hit_pins):
                                         
     elif input_hit_pins_setting == "R" :
 
-        user_input = input(input_message)
+        user_input = input(input_message + " \n")
 
         hit_pins_input = throw_ball(hit_pins)      
 
@@ -164,7 +155,7 @@ def get_input(input_hit_pins_setting, input_message, hit_pins):
 
 def game_play(input_hit_pins_setting, input_message):
     
-    print("game starts now")
+    print("\ngame starts now")
 
     game_score = []
     strike = 0
@@ -174,46 +165,53 @@ def game_play(input_hit_pins_setting, input_message):
         
         hit_pins = 0        
 
-        for roll in range(2):
-        
-            print("current score", game_score)
+        for roll in range(2):                
+
+            print("\nyou play frame {0} roll {1}".format(frame + 1, roll + 1))
 
             hit_pins_input = get_input(input_hit_pins_setting, input_message, hit_pins)
 
             game_score, bonus = calculate_score(game_score, frame + 1, roll + 1, hit_pins_input)
             hit_pins += hit_pins_input
+
+            if frame != 0 : print("previous frame score", game_score[frame - 1])
+            print("current frame score", game_score[frame])
 
             if bonus == "STRIKE" :
 
                 strike += 1
 
-                return
+                break
 
             if bonus == "SPARE" :
 
                 spare += 1
 
-
         if (frame + 1) == 10 and ( strike > 0 or spare > 0 ) :
 
-            print("you get extra roll")
+            print("\nyou get extra roll")
 
-            hit_pins = 0
-            
-            print("current score", game_score)
+            hit_pins = 0            
 
             hit_pins_input = get_input(input_hit_pins_setting, input_message, hit_pins)
 
-            game_score, bonus = calculate_score(game_score, frame + 1, roll + 1, hit_pins_input)
+            game_score, bonus = calculate_score(game_score, frame + 1, 3, hit_pins_input)
             hit_pins += hit_pins_input
 
-    print("end score", game_score)
+            print("previous frame score", game_score[frame - 1])
+            print("current frame score", game_score[frame])
+
+    print("\nend score")
+
+    for x in game_score:
+
+        print("\n", x)
 
 
 
 def play() :
 
-    user_input = input('press M to input the hit pins manually, press R to input hit pins randomly')
+    user_input = input('press M to input the hit pins manually, press R to input hit pins randomly \n')
     
     input_hit_pins_setting = str(user_input)
 
@@ -240,4 +238,3 @@ def play() :
         sys.exit()
 
     game_play(input_hit_pins_setting, input_message)
-
